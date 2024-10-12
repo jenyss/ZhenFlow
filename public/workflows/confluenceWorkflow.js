@@ -284,6 +284,7 @@ async function createJiraEpicIfNotExists(epicTitle, projectKey) {
 }
 
 
+
 async function createJiraTicketInEpic(epicKey, ticketSummary, description, projectKey) {
     try {
         console.log("Creating Jira ticket with the following details:");
