@@ -1,0 +1,83 @@
+body {
+    background-color: #302f2f;
+    /* Black background */
+    color: #f1f1f1;
+    /* Light grey text */
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+}
+
+h2.blue{
+    color: #ff7352;
+    /* Light pink */
+    margin-bottom: 20px;
+}
+
+.input-container {
+    display: flex;
+    align-items: center;
+    /* Align button and textarea horizontally */
+    justify-content: center;
+    margin-top: 10px;
+}
+
+#userInput {
+    width: 500px;
+    padding: 15px;
+    border-radius: 10px;
+    border: none;
+    background-color: #555454;
+    /* Dark grey background */
+    color: #f0f0f0;
+    /* Light grey text */
+    font-size: 16px;
+    margin-right: 10px;
+    /* Space between input and button */
+}
+
+button {
+    background-color: #ff7352;
+    /* Light pink */
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 16px;
+    cursor: pointer;
+    color: #302f2f;
+    /* Black text */
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #cf593d;
+    /* Slightly darker pink on hover */
+}
+
+#response {
+    margin-top: 20px;
+    width: 80%;
+    background-color: #302f2f;
+    /* Black background */
+    padding: 15px;
+    border-radius: 10px;
+    color: #f0f0f0;
+    /* Light grey text */
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+}
