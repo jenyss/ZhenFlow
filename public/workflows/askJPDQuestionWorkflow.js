@@ -2,49 +2,6 @@
 let embeddingsStore = {}; 
 let issuesStore = {}; // Store detailed issue information for translation back to natural language
 
-// Function to create embeddings for the user's prompt
-async function createEmbedding(text) {
-    try {
-        const response = await fetch("https://api.openai.com/v1/embeddings", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer `
-            },
-            body: JSON.stringify({
-                model: "text-embedding-ada-002",
-                input: text
-            })
-        });
-        const data = await response.json();
-        return data.data[0].embedding;
-    } catch (error) {
-        console.error("Error creating embedding:", error);
-    }
-}
-
-// Cosine similarity function to compare embeddings
-function cosineSimilarity(vecA, vecB) {
-    const dotProduct = vecA.reduce((sum, a, idx) => sum + a * vecB[idx], 0);
-    const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
-    const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
-    return dotProduct / (magnitudeA * magnitudeB);
-}
-
-// Function to find all relevant Jira tickets based on the user query
-function findAllRelevantJiraTickets(queryEmbedding) {
-    const similarities = [];
-
-    for (const [ticketId, ticketEmbedding] of Object.entries(embeddingsStore)) {
-        const similarity = cosineSimilarity(queryEmbedding, ticketEmbedding);
-        similarities.push({ ticketId, similarity });
-    }
-
-    // Sort by similarity and return all relevant results
-    similarities.sort((a, b) => b.similarity - a.similarity);
-    return similarities.map(result => result.ticketId); // Return all ticket IDs
-}
-
 // Main function to handle user input
 export async function sendQuestion() {
     const question = document.getElementById("userInput").value;
@@ -184,6 +141,49 @@ async function connectToJira() {
         console.error("Error:", error.message);
         document.getElementById('jiraIssues').innerHTML = `<strong>Error:</strong> ${error.message}`;
     }
+}
+
+// Function to create embeddings for the user's prompt
+async function createEmbedding(text) {
+    try {
+        const response = await fetch("https://api.openai.com/v1/embeddings", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer `
+            },
+            body: JSON.stringify({
+                model: "text-embedding-ada-002",
+                input: text
+            })
+        });
+        const data = await response.json();
+        return data.data[0].embedding;
+    } catch (error) {
+        console.error("Error creating embedding:", error);
+    }
+}
+
+// Cosine similarity function to compare embeddings
+function cosineSimilarity(vecA, vecB) {
+    const dotProduct = vecA.reduce((sum, a, idx) => sum + a * vecB[idx], 0);
+    const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
+    const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
+    return dotProduct / (magnitudeA * magnitudeB);
+}
+
+// Function to find all relevant Jira tickets based on the user query
+function findAllRelevantJiraTickets(queryEmbedding) {
+    const similarities = [];
+
+    for (const [ticketId, ticketEmbedding] of Object.entries(embeddingsStore)) {
+        const similarity = cosineSimilarity(queryEmbedding, ticketEmbedding);
+        similarities.push({ ticketId, similarity });
+    }
+
+    // Sort by similarity and return all relevant results
+    similarities.sort((a, b) => b.similarity - a.similarity);
+    return similarities.map(result => result.ticketId); // Return all ticket IDs
 }
 
 // Call connectToJira to fetch data and generate embeddings on page load

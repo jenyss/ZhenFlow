@@ -21,58 +21,6 @@ if (!jiraEmail || !jiraApiToken || !jiraUrl) {
     process.exit(1); // Exit the process if env variables are not set
 }
 
-// =========================================== CONFLUENCE FUNCTIONS ===========================================
-
-// Fetch the Confluence page content
-app.post('/get-confluence-page', async (req, res) => {
-    const { pageUrl } = req.body;
-
-    const authHeader = `Basic ${Buffer.from(`${jiraEmail}:${jiraApiToken}`).toString('base64')}`;
-
-    try {
-        // Extract the page ID from the URL
-        const pageIdMatch = pageUrl.match(/\/pages\/(\d+)\//);
-        if (!pageIdMatch || !pageIdMatch[1]) {
-            throw new Error("Page ID not found in URL");
-        }
-        const pageId = pageIdMatch[1];  // Extract the page ID
-
-        // Fetch the Confluence page content
-        const response = await fetch(`${jiraUrl}/wiki/rest/api/content/${pageId}?expand=body.storage`, {
-            method: 'GET',
-            headers: {
-                "Authorization": authHeader,
-                "Content-Type": "application/json"
-            }
-        });
-
-        if (!response.ok) {
-            return res.status(response.status).json({ error: `Failed to fetch page from Confluence. Status: ${response.status}` });
-        }
-
-        const pageData = await response.json();
-        const content = pageData.body.storage.value;
-        const title = pageData.title;
-        const jiraProject = extractProjectFromContent(content);  // Assuming the project key is embedded in the content
-
-        res.status(200).json({ content, title, jiraProject });
-
-    } catch (error) {
-        console.error("Error fetching Confluence page content:", error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Helper function to extract the project key from Confluence page content
-function extractProjectFromContent(content) {
-    // Implement logic to extract Jira project name/key from the page content
-    const projectMatch = content.match(/Project:\s*([A-Z]+)\b/); // Assuming "Project: <key>" is mentioned in the content
-    if (projectMatch && projectMatch[1]) {
-        return projectMatch[1];
-    }
-    throw new Error("Jira project key not found in Confluence content");
-}
-
 // =========================================== OPENAI FUNCTIONS ===========================================
 
 // Call to OpenAI to break down the Congluence page content into Jira tickets
@@ -274,6 +222,61 @@ app.post('/create-ticket', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+
+// =========================================== CONFLUENCE FUNCTIONS ===========================================
+
+// Fetch the Confluence page content
+app.post('/get-confluence-page', async (req, res) => {
+    const { pageUrl } = req.body;
+
+    const authHeader = `Basic ${Buffer.from(`${jiraEmail}:${jiraApiToken}`).toString('base64')}`;
+
+    try {
+        // Extract the page ID from the URL
+        const pageIdMatch = pageUrl.match(/\/pages\/(\d+)\//);
+        if (!pageIdMatch || !pageIdMatch[1]) {
+            throw new Error("Page ID not found in URL");
+        }
+        const pageId = pageIdMatch[1];  // Extract the page ID
+
+        // Fetch the Confluence page content
+        const response = await fetch(`${jiraUrl}/wiki/rest/api/content/${pageId}?expand=body.storage`, {
+            method: 'GET',
+            headers: {
+                "Authorization": authHeader,
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            return res.status(response.status).json({ error: `Failed to fetch page from Confluence. Status: ${response.status}` });
+        }
+
+        const pageData = await response.json();
+        const content = pageData.body.storage.value;
+        const title = pageData.title;
+        const jiraProject = extractProjectFromContent(content);  // Assuming the project key is embedded in the content
+
+        res.status(200).json({ content, title, jiraProject });
+
+    } catch (error) {
+        console.error("Error fetching Confluence page content:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+// Helper function to extract the project key from Confluence page content
+function extractProjectFromContent(content) {
+    // Implement logic to extract Jira project name/key from the page content
+    const projectMatch = content.match(/Project:\s*([A-Z]+)\b/); // Assuming "Project: <key>" is mentioned in the content
+    if (projectMatch && projectMatch[1]) {
+        return projectMatch[1];
+    }
+    throw new Error("Jira project key not found in Confluence content");
+}
+
 
 // Update Confluence page Jira Tickets section to list all tickets from the related to this page Epic
 app.post('/update-confluence-page', async (req, res) => {
