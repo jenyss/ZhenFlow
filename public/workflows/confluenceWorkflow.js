@@ -64,16 +64,17 @@ export async function processConfluencePage(userInput) {
         const jiraLinks = await processTickets(tickets, epicKey, jiraProject);
 
         
-        // // Step 5: Update the Confluence page with Jira ticket links
+        // // OLD Step 5: Update the Confluence page with Jira ticket links
         // console.log("Updating Confluence page with Jira ticket links...");
         // console.log("Ticket Summary:", userInput);
         // console.log("Ticket Summary:", jiraLinks);
         // await updateConfluencePageWithJiraLinks(userInput, jiraLinks);
 
         // Step 5: Update the Confluence page with created Epic
-        
         await updateConfluencePageWithEpicLink(userInput, epicKey);
-        await getConfluencePage(userInput);
+
+        //print Confluence page structure
+        // await getConfluencePage(userInput);
 
 
         responseDiv.innerHTML = `Jira tickets created and Confluence page updated. <br> <a style="color:#ff7352;" href="${userInput}">View updated Confluence page</a>`;
@@ -136,48 +137,6 @@ async function getConfluencePageContent(pageUrl) {
     }
 }
 
-/*
-async function getConfluencePageContent(pageUrl) {
-    const confluence_url = 'https://jenys.atlassian.net'; // Replace with your Confluence domain
-    const confluence_email = 'zhenya.stoeva@gmail.com'; // Your Confluence email
-    const confluence_api_token = 'ATATT3xFfGF0t6c-C1NhKZvD_R-rKPI6jh88MDoWqJXanotkbu45D8e0DgcLfb80LFfvvXA9hl2eBFYGizq8HfxXuw9E5KEc8BzJj1EpW4zYjXWgsjbC7eg8P7dp5oU6wyDCQMsRh3GN5Uz7iGw2yajFCgWNlEwbO1UlqRylAvxxPNMw-zfpCcQ=8F922A1F'; // Your Confluence API token
-
-    try {
-        const authHeader = `Basic ${btoa(`${confluence_email}:${confluence_api_token}`)}`;
-        
-        // Extract the page ID from the URL
-        const pageIdMatch = pageUrl.match(/\/pages\/(\d+)\//);
-        if (!pageIdMatch || !pageIdMatch[1]) {
-            throw new Error("Page ID not found in URL");
-        }
-        const pageId = pageIdMatch[1];  // Extract the page ID, e.g., 81264641
-
-        // Fetch the Confluence page content
-        const response = await fetch(`${confluence_url}/wiki/rest/api/content/${pageId}?expand=body.storage`, {
-            method: 'GET',
-            headers: {
-                "Authorization": authHeader,
-                "Content-Type": "application/json"
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch page from Confluence. Status: ${response.status}`);
-        }
-
-        const pageData = await response.json();
-        const content = pageData.body.storage.value;
-        const title = pageData.title;
-        const jiraProject = extractProjectFromContent(content); // Assuming the project key is embedded in the content
-        console.log(`Confluence page title: ${title}, Project: ${jiraProject}`);
-        return { content, title, jiraProject };
-
-    } catch (error) {
-        console.error("Error fetching Confluence page content:", error);
-        throw error;
-    }
-}
-*/
 
 // Helper function to extract the project key from Confluence page content
 function extractProjectFromContent(content) {
@@ -189,52 +148,6 @@ function extractProjectFromContent(content) {
     throw new Error("Jira project key not found in Confluence content");
 }
 
-/*
-async function breakDownContent(content) {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer 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`
-        },
-        body: JSON.stringify({
-            model: "gpt-3.5-turbo",
-            messages: [
-                {
-                    role: "user",
-                    content: `
-                        Find the "Requirements" section and break down only the content from this section into separate Jira tickets with the following structure for each ticket:
-                        1. "summary" - a high-level description of the task (used as the title of the Jira ticket).
-                        2. "description" - this should contain:
-                            2.1 "goal" - a brief explanation of the purpose of the task.
-                            2.2 "requirements" - a detailed description of the requirements or steps to implement.
-                           
-                        Content to be broken down:
-                        ${content}
-                    `
-                }
-            ],
-            max_tokens: 2048,  // Adjust token limit based on content size and response length
-            temperature: 0.7
-        })
-    });
-
-    const responseData = await response.json();
-
-    // Ensure the response is properly structured and parse the content
-    if (responseData.choices && responseData.choices.length > 0) {
-        const tasksText = responseData.choices[0].message.content;
-        console.log("Tasks extracted from content:", tasksText);
-
-        // Parse the tasks into structured summary and description
-        const tickets = parseTasksToTickets(tasksText);
-        console.log("Parsed Tickets:", tickets);
-        return tickets;  // Return an array of objects with { summary, description }
-    } else {
-        throw new Error("Failed to extract tasks from content.");
-    }
-}
-*/
 
 // Frontend: Calls the backend to break down the content using OpenAI API
 async function breakDownContent(content) {
