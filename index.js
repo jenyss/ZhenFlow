@@ -21,6 +21,7 @@ if (!jiraEmail || !jiraApiToken || !jiraUrl) {
     process.exit(1); // Exit the process if env variables are not set
 }
 
+
 // =========================================== OPENAI FUNCTIONS ===========================================
 
 // Call to OpenAI to break down the Congluence page content into Jira tickets

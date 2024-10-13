@@ -149,7 +149,7 @@ function extractProjectFromContent(content) {
 }
 
 
-// Frontend: Calls the backend to break down the content using OpenAI API
+// // break down the content using OpenAI API
 async function breakDownContent(content) {
     try {
         const response = await fetch('http://localhost:3000/break-down-content', {
