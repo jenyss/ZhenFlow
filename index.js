@@ -226,6 +226,53 @@ app.post('/create-ticket', async (req, res) => {
 
 // =========================================== CONFLUENCE FUNCTIONS ===========================================
 
+//Printing confluence page
+app.post('/get-confluence-page-print', async (req, res) => {
+    const { pageUrl } = req.body;
+
+    const authHeader = `Basic ${Buffer.from(`${jiraEmail}:${jiraApiToken}`).toString('base64')}`;
+
+    try {
+        // Extract the page ID from the URL
+        const pageIdMatch = pageUrl.match(/\/pages\/(\d+)\//);
+        if (!pageIdMatch || !pageIdMatch[1]) {
+            throw new Error("Page ID not found in URL");
+        }
+        const pageId = pageIdMatch[1];  // Extract the page ID
+
+        // Fetch the full Confluence page content, including multiple formats
+        const response = await fetch(`${jiraUrl}/wiki/rest/api/content/${pageId}?expand=body.storage,body.view,body.editor`, {
+            method: 'GET',
+            headers: {
+                "Authorization": authHeader,
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            return res.status(response.status).json({ error: `Failed to fetch page from Confluence. Status: ${response.status}` });
+        }
+
+        const pageData = await response.json();
+        const contentStorage = pageData.body.storage.value;
+        const contentEditor = pageData.body.editor.value;
+        const contentView = pageData.body.view.value;
+
+        // Return the content in all available formats
+        res.status(200).json({
+            storageContent: contentStorage,
+            editorContent: contentEditor,
+            viewContent: contentView,
+            title: pageData.title
+        });
+
+    } catch (error) {
+        console.error("Error fetching Confluence page content:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
 // Fetch the Confluence page content
 app.post('/get-confluence-page', async (req, res) => {
     const { pageUrl } = req.body;
@@ -278,7 +325,7 @@ function extractProjectFromContent(content) {
 }
 
 
-// Update Confluence page Jira Tickets section to list all tickets from the related to this page Epic
+// Update Confluence page with the created Jira tickets
 app.post('/update-confluence-page', async (req, res) => {
     const { pageUrl, jiraLinks } = req.body;
 
@@ -366,6 +413,91 @@ app.post('/update-confluence-page', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+//Update Confluence page with created Epic
+app.post('/update-confluence-page-with-epic', async (req, res) => {
+    const { pageUrl, epicKey } = req.body;
+
+    const authHeader = `Basic ${Buffer.from(`${jiraEmail}:${jiraApiToken}`).toString('base64')}`;
+
+    try {
+        // Extract the page ID from the provided URL
+        const pageIdMatch = pageUrl.match(/\/pages\/(\d+)\//);
+        if (!pageIdMatch || !pageIdMatch[1]) {
+            console.error("Page ID not found in the provided URL.");
+            return res.status(400).json({ error: "Page ID not found in the provided URL." });
+        }
+        const pageId = pageIdMatch[1];
+        console.log("Page ID extracted:", pageId);
+
+        // Fetch the current version and content of the Confluence page
+        const getPageResponse = await fetch(`${jiraUrl}/wiki/rest/api/content/${pageId}?expand=body.storage,version`, {
+            method: 'GET',
+            headers: {
+                'Authorization': authHeader,
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!getPageResponse.ok) {
+            console.error("Failed to fetch page data:", getPageResponse.statusText);
+            return res.status(getPageResponse.status).json({ error: "Failed to fetch page data." });
+        }
+
+        const pageData = await getPageResponse.json();
+        const currentVersion = pageData.version.number;
+        const currentContent = pageData.body.storage.value;
+
+        console.log("Current page version:", currentVersion);
+
+        // Add the expand section with the embedded Epic link at the bottom of the current content
+        const epicExpandSection = `
+            <ac:structured-macro ac:name="expand" ac:schema-version="1" ac:macro-id="unique-macro-id">
+                <ac:parameter ac:name="title">Jira Epic</ac:parameter>
+                <ac:rich-text-body>
+                    <a href="https://jenys.atlassian.net/browse/${epicKey}" data-layout="center" data-width="100.00" data-card-appearance="embed">${epicKey}</a>
+                    <p></p>
+                </ac:rich-text-body>
+            </ac:structured-macro>
+        `;
+
+        const updatedContent = currentContent + epicExpandSection;
+
+        // Send the request to update the Confluence page with the new content
+        const updateResponse = await fetch(`${jiraUrl}/wiki/rest/api/content/${pageId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': authHeader,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                version: { number: currentVersion + 1 },
+                title: pageData.title,  // Keep the same title
+                type: 'page',
+                body: {
+                    storage: {
+                        value: updatedContent,
+                        representation: 'storage'
+                    }
+                }
+            })
+        });
+
+        const updateData = await updateResponse.json();
+        if (!updateResponse.ok) {
+            console.error("Failed to update Confluence page:", updateData);
+            return res.status(updateResponse.status).json({ error: updateData.message || 'Failed to update Confluence page' });
+        }
+
+        console.log("Confluence page updated successfully with Epic link.");
+        res.status(200).json({ message: 'Confluence page updated successfully', data: updateData });
+
+    } catch (error) {
+        console.error("Error updating Confluence page:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 
 
 // Start the server

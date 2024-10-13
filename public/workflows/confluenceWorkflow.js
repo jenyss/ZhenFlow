@@ -64,17 +64,49 @@ export async function processConfluencePage(userInput) {
         const jiraLinks = await processTickets(tickets, epicKey, jiraProject);
 
         
-        // Step 5: Update the Confluence page with Jira ticket links
-        console.log("Updating Confluence page with Jira ticket links...");
-        console.log("Ticket Summary:", userInput);
-        console.log("Ticket Summary:", jiraLinks);
-        await updateConfluencePageWithJiraLinks(userInput, jiraLinks);
+        // // Step 5: Update the Confluence page with Jira ticket links
+        // console.log("Updating Confluence page with Jira ticket links...");
+        // console.log("Ticket Summary:", userInput);
+        // console.log("Ticket Summary:", jiraLinks);
+        // await updateConfluencePageWithJiraLinks(userInput, jiraLinks);
+
+        // Step 5: Update the Confluence page with created Epic
+        
+        await updateConfluencePageWithEpicLink(userInput, epicKey);
+        await getConfluencePage(userInput);
+
 
         responseDiv.innerHTML = `Jira tickets created and Confluence page updated. <br> <a style="color:#ff7352;" href="${userInput}">View updated Confluence page</a>`;
 
     } catch (error) {
         responseDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
         console.error("Error in processConfluencePage function:", error);
+    }
+}
+
+//Printing confluence page
+async function getConfluencePage(pageUrl) {
+    try {
+        const response = await fetch('http://localhost:3000/get-confluence-page-print', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ pageUrl })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch Confluence page. Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Log each content format
+        console.log("Storage Content:", data.storageContent);
+        console.log("Editor Content:", data.editorContent);
+        console.log("View Content:", data.viewContent);
+    } catch (error) {
+        console.error("Error fetching Confluence page:", error);
     }
 }
 
@@ -352,6 +384,35 @@ async function updateConfluencePageWithJiraLinks(pageUrl, jiraLinks) {
         console.log("Confluence page updated successfully on the backend.");
     } catch (error) {
         console.error("Error in updateConfluencePageWithJiraLinks:", error);
+        throw error;
+    }
+}
+
+async function updateConfluencePageWithEpicLink(pageUrl, epicKey) {
+    try {
+        // Prepare the payload to send to the backend
+        const payload = {
+            pageUrl: pageUrl,
+            epicKey: epicKey
+        };
+
+        // Send request to the backend to update the Confluence page with the epic link
+        const response = await fetch('http://localhost:3000/update-confluence-page-with-epic', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const responseData = await response.json();
+        if (!response.ok) {
+            throw new Error(`Failed to update Confluence page with Epic link. Error: ${responseData.error}`);
+        }
+
+        console.log("Confluence page updated with Epic link successfully.");
+    } catch (error) {
+        console.error("Error in updateConfluencePageWithEpicLink:", error);
         throw error;
     }
 }
