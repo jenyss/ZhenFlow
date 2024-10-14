@@ -7,28 +7,34 @@ export async function processConfluencePage(userInput) {
         console.log("Fetching Confluence page content...");
         const { content, title, jiraProject } = await getConfluencePageContent(userInput);
 
-        // Step 2: Embed the content using OpenAI's API and break it down into granular tickets
-        console.log("Creating embedding and breaking down content into granular tasks...");
+        // Step 2: Breaking down Confluence page content into granular tasks
+        console.log("Breaking down content into granular tasks...");
+        // Await the response from breakDownContent
         const tickets = await breakDownContent(content);
-        
-        // Debugging: Log the tickets array
-        console.log("Tickets array:", tickets);
-        console.log("Number of tickets:", tickets.length);
+        console.log("Tickets generated:", tickets);
 
-        // If no tickets are found, exit
-        if (!tickets || tickets.length === 0) {
-            console.error("No tickets to process.");
-            responseDiv.innerHTML = "No tasks found to create Jira tickets.";
-            return;
-        }
+        
+        // // Debugging: Log the tickets array
+        // console.log("Tickets array:", tickets);
+        // console.log("Number of tickets:", tickets.length);
+
+        // // If no tickets are found, exit
+        // if (!tickets || tickets.length === 0) {
+        //     console.error("No tickets to process.");
+        //     responseDiv.innerHTML = "No tasks found to create Jira tickets.";
+        //     return;
+        // }
 
         // Step 3: Check if Epic already exists in the Jira project
         console.log(`Checking if Epic '${title}' exists in project '${jiraProject}'...`);
-        const epicKey = await createJiraEpicIfNotExists(title, jiraProject);
-        if (!epicKey) {
-            responseDiv.innerHTML = "Epic already created.";
-            return;
+        const epicResult = await processEpic(title, jiraProject);
+
+        // Check if the epic already exists and stop the flow
+        if (epicResult.message.includes("already exists")) {
+            responseDiv.innerHTML = `Epic already exists: ${epicResult.key}`;
+            return;  // Stop further processing
         }
+        
         
         // Step 4: Define and call the processTickets function
         async function processTickets(tickets, epicKey, jiraProject) {
@@ -61,17 +67,10 @@ export async function processConfluencePage(userInput) {
         }
 
         // Call processTickets after defining it
-        const jiraLinks = await processTickets(tickets, epicKey, jiraProject);
-
-        
-        // // OLD Step 5: Update the Confluence page with Jira ticket links
-        // console.log("Updating Confluence page with Jira ticket links...");
-        // console.log("Ticket Summary:", userInput);
-        // console.log("Ticket Summary:", jiraLinks);
-        // await updateConfluencePageWithJiraLinks(userInput, jiraLinks);
+        const jiraLinks = await processTickets(tickets, epicResult.key, jiraProject);
 
         // Step 5: Update the Confluence page with created Epic
-        await updateConfluencePageWithEpicLink(userInput, epicKey);
+        await updateConfluencePageWithEpicLink(userInput, epicResult.key);
 
         //print Confluence page structure
         // await getConfluencePage(userInput);
@@ -138,26 +137,16 @@ async function getConfluencePageContent(pageUrl) {
 }
 
 
-// Helper function to extract the project key from Confluence page content
-function extractProjectFromContent(content) {
-    // Implement logic to extract Jira project name/key from the page content
-    const projectMatch = content.match(/Project:\s*([A-Z]+)\b/); // Assuming "Project: <key>" is mentioned in the content
-    if (projectMatch && projectMatch[1]) {
-        return projectMatch[1];
-    }
-    throw new Error("Jira project key not found in Confluence content");
-}
-
-
-// // break down the content using OpenAI API
-async function breakDownContent(content) {
+// break down the content using OpenAI API
+async function breakDownContent(content, descriptionStructure) {
     try {
+        // Send request to the backend with content and customizable description structure
         const response = await fetch('http://localhost:3000/break-down-content', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ content })  // Send the Confluence content to the backend
+            body: JSON.stringify({ content, descriptionStructure })  // Send content and structure to the backend
         });
 
         const data = await response.json();
@@ -181,53 +170,89 @@ async function breakDownContent(content) {
     }
 }
 
-
+// Helper function to parse the tasks into summary and description
 function parseTasksToTickets(tasksText) {
     const tickets = [];
+    
+    // Regex pattern to match each ticket starting with "Summary" and capturing both "Summary" and "Description"
+    const ticketPattern = /Summary:\s*(.*?)\n\s*Description:\s*([\s\S]*?)(?=(\n\s*Summary|$))/g;
+    
+    let match;
+    while ((match = ticketPattern.exec(tasksText)) !== null) {
+        const summary = match[1].trim();
+        let description = match[2].trim();
 
-    // Use a different approach to split the tasks if "Ticket X:" pattern isn't reliable
-    const taskBlocks = tasksText.split(/\n\n+/g).filter(Boolean);  // Split by double newlines (or more)
-
-    taskBlocks.forEach((block, index) => {
-        // Trim each block to remove unnecessary spaces/newlines
-        const trimmedBlock = block.trim();
-
-        // Extract summary and description
-        const summaryMatch = trimmedBlock.match(/Summary:\s*(.*?)(\n|$)/);  // Extract summary after "Summary:"
-        const summary = summaryMatch ? summaryMatch[1].trim() : `Untitled Ticket ${index + 1}`;
-
-        const descriptionMatch = trimmedBlock.match(/Description:\s*(.*)/s);  // Extract description after "Description:"
-        const description = descriptionMatch ? descriptionMatch[1].trim() : "No description";
+        // Add a new line before "Requirements" so it doesn't stick to "Goal"
+        description = description
+            .replace(/\n\s*(?=Goal)/g, '\n\n')  // Ensure a new line before "Goal"
+            .replace(/\n\s*(?=Requirements)/g, '\n\n');  // Ensure a new line before "Requirements"
 
         tickets.push({
             summary,
-            description
+            description,
         });
-    });
+    }
 
-    return tickets;  // Return the array of tickets starting from index 0
+    return tickets;
 }
+  
 
-async function createJiraEpicIfNotExists(epicTitle, projectKey) {
+// Function to check if the Epic exists
+async function checkEpic(epicTitle, projectKey) {
     const response = await fetch('http://localhost:3000/check-epic', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            epicTitle: epicTitle,
-            projectKey: projectKey
-        })
+        body: JSON.stringify({ epicTitle, projectKey })
     });
 
     const data = await response.json();
     if (!response.ok) {
-        console.error("Error checking Epic:", data);
-        return null;
+        throw new Error(data.error || 'Failed to check Epic');
     }
-    return data.key;  // If Epic exists or is created
+
+    return data;  // Returns the epic data or message
 }
 
+// Function to create a new Jira Epic if it doesn't exist
+async function createEpic(epicTitle, projectKey) {
+    const response = await fetch('http://localhost:3000/create-epic', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ epicTitle, projectKey })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error || 'Failed to create Epic');
+    }
+
+    // Ensure that only the key (not the entire object) is returned
+    return data.key;  // This should return the Epic's key directly as a string
+}
+
+async function processEpic(epicTitle, projectKey) {
+    try {
+        const epicData = await checkEpic(epicTitle, projectKey);
+
+        if (epicData.message === "Epic already exists") {
+            console.log(`Epic for "${epicTitle}" already exists!`);
+            return { message: `Epic for "${epicTitle}" already exists!`, key: epicData.key };
+        }
+
+        // If the Epic does not exist, create a new one
+        const newEpicKey = await createEpic(epicTitle, projectKey);
+        console.log(`New Epic created with key: ${newEpicKey}`);
+        return { message: `New Epic created with key: ${newEpicKey}`, key: newEpicKey };
+
+    } catch (error) {
+        console.error("Error processing Epic:", error.message);
+        return { message: "An error occurred while processing the Epic.", error: error.message };
+    }
+}
 
 
 async function createJiraTicketInEpic(epicKey, ticketSummary, description, projectKey) {
@@ -269,35 +294,6 @@ async function createJiraTicketInEpic(epicKey, ticketSummary, description, proje
     } catch (error) {
         console.error("Error occurred in createJiraTicketInEpic:", error);
         return null;
-    }
-}
-
-async function updateConfluencePageWithJiraLinks(pageUrl, jiraLinks) {
-    try {
-        // Prepare the payload to send to the backend
-        const payload = {
-            pageUrl: pageUrl,
-            jiraLinks: jiraLinks
-        };
-
-        // Send request to the backend to update the Confluence page
-        const response = await fetch('http://localhost:3000/update-confluence-page', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const responseData = await response.json();
-        if (!response.ok) {
-            throw new Error(`Failed to update Confluence page. Error: ${responseData.error}`);
-        }
-
-        console.log("Confluence page updated successfully on the backend.");
-    } catch (error) {
-        console.error("Error in updateConfluencePageWithJiraLinks:", error);
-        throw error;
     }
 }
 

@@ -150,7 +150,7 @@ async function createEmbedding(text) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer `
+                "Authorization": `Bearer OPENAI_API_TOKEN`
             },
             body: JSON.stringify({
                 model: "text-embedding-ada-002",
