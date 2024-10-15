@@ -4,7 +4,7 @@ Hey, you, out there... thanks for checking here!
 
 This is a space to experiment and have fun while automating Jira and Confluence workflows and making sense of unstructured data — all powered by LLMs. Use the code at your dscretion but beware, most of it is LLM generated.
 
-<h3>Supported Workflows:</h3>
+<h3>Supported Workflows</h3>
 
 <b>Confluence-to-Jira integration</b><br>
 1. When Confluence page prompt, create Epic and Stories (in this Epic) from the Requirements section in the page.
