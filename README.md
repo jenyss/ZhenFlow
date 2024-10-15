@@ -6,11 +6,11 @@ This is a space to experiment and have fun while automating Jira and Confluence 
 
 <h3>Supported Workflows:</h3>
 
-<b>Confluence-to-Jira integration<b>
+<b>Confluence-to-Jira integration</b><br>
 1. When Confluence page prompt, create Epic and Stories (in this Epic) from the Requirements section in the page.
-2. Work with my Jira tickets from Confluence. Update the Confluence page with the created Epic by embedding it in expand macro.
+2. Work with my Jira tickets from Confluence. Update the Confluence page with the created Epic by embedding it in expand macro.<br>
 
-<b>Ask Jira Product Discovery Project a question</b>
+<b>Ask Jira Product Discovery Project a question</b><br>
 Prompt a model with questions related to the Jira tickets in a JPD project of your choice.
 
 <h3>Intallation</h3>
