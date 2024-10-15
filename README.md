@@ -14,6 +14,9 @@ This is a space to experiment and have fun while automating Jira and Confluence 
 Prompt a model with questions related to the Jira tickets in a JPD project of your choice.
 
 <h3>Intallation</h3>
-Node.js
-OpenAI API tier 1 (at least).
-Atlassian Rest API
+
+You will need:<br>
+
+Node.js<br>
+OpenAI API tier 1 (at least).<br>
+Atlassian Rest API<br>
