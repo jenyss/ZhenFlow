@@ -40,10 +40,10 @@ Replace your-username and your-repository-name with the actual GitHub username a
 ### Set Up Environment Variables
 
 <code>JIRA_EMAIL=your-jira-email
-JIRA_API_TOKEN=your-jira-api-token
-JIRA_URL=https://your-domain.atlassian.net
-OPENAI_TOKEN=your-openai-api-key
-PORT=3000
+ JIRA_API_TOKEN=your-jira-api-token
+ JIRA_URL=https://your-domain.atlassian.net
+ OPENAI_TOKEN=your-openai-api-key
+ PORT=3000
 </code>
 
 Make sure to replace the placeholders with your actual credentials.
