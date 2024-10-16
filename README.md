@@ -39,6 +39,8 @@ Replace your-username and your-repository-name with the actual GitHub username a
 
 ### Set Up Environment Variables
 
+In the root directory of your project, create a new file named <code>.env</code> and specify the below environment variables. 
+
 <code>JIRA_EMAIL=your-jira-email
  JIRA_API_TOKEN=your-jira-api-token
  JIRA_URL=https://your-domain.atlassian.net
@@ -46,7 +48,8 @@ Replace your-username and your-repository-name with the actual GitHub username a
  PORT=3000
 </code>
 
-Make sure to replace the placeholders with your actual credentials.
+Make sure your .env file is included in .gitignore to prevent it from being tracked by version control and shared publicly.
+In the root directory of your project, create a new file named <code>.gitignore<code> and list <code>.env</code> in it.
 
 ### Run the Project
 
