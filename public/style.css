@@ -1,27 +1,19 @@
 body {
     background-color: #302f2f;
-    /* Black background */
     color: #f1f1f1;
-    /* Light grey text */
     font-family: Arial, sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start; /* Align content at the top */
     height: 100vh;
     margin: 0;
-}
-
-h2.blue{
-    color: #ff7352;
-    /* Light pink */
-    margin-bottom: 20px;
+    overflow: hidden; /* Prevent the body from scrolling */
 }
 
 .input-container {
     display: flex;
     align-items: center;
-    /* Align button and textarea horizontally */
     justify-content: center;
     margin-top: 10px;
 }
@@ -29,44 +21,38 @@ h2.blue{
 #userInput {
     width: 500px;
     padding: 15px;
-    border-radius: 10px;
+    border-radius: 5px;
     border: none;
     background-color: #555454;
-    /* Dark grey background */
     color: #f0f0f0;
-    /* Light grey text */
     font-size: 16px;
     margin-right: 10px;
-    /* Space between input and button */
 }
 
 button {
-    background-color: #ff7352;
-    /* Light pink */
+    background-color: #FEB7C7;
     border: none;
     padding: 10px 20px;
-    border-radius: 20px;
+    border-radius: 5px;
     font-size: 16px;
     cursor: pointer;
     color: #302f2f;
-    /* Black text */
     transition: background-color 0.3s ease;
 }
 
 button:hover {
-    background-color: #cf593d;
-    /* Slightly darker pink on hover */
+    background-color: #dc98a8;
 }
 
 #response {
     margin-top: 20px;
     width: 80%;
     background-color: #302f2f;
-    /* Black background */
     padding: 15px;
-    border-radius: 10px;
+    border-radius: 5px;
     color: #f0f0f0;
-    /* Light grey text */
+    overflow-y: auto; /* Allow vertical scrolling */
+    height: calc(100vh - 200px); /* Adjust height to make room for header */
 }
 
 .row {
@@ -80,4 +66,44 @@ button:hover {
     align-items: center;
     width: 100%;
     max-width: 600px;
+}
+
+/* New styles */
+.fixed-top {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: #302f2f;
+    z-index: 1000; /* Make sure it stays on top */
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.scrollable-output {
+    overflow-y: auto;
+    padding-top: 150px; /* Space for the fixed header */
+    width: 100%;
+    height: calc(100vh - 200px); /* Adjust height to make room for header */
+}
+
+/* Ensure image, input, and button are centered */
+.centered-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+#headerImage {
+    width: 80px;
+    height: auto;
+    margin-right: 20px;
+}
+
+#headerImage {
+    width: 50px; /* Adjust width as needed */
+    height: auto; /* Maintain aspect ratio */
+    margin-right: 10px;
+    border-radius: 5px; /* Rounds the corners */
+    overflow: hidden; /* Ensures image fits within the rounded corners */
 }

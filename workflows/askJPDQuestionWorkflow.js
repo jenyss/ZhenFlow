@@ -39,103 +39,78 @@ export async function sendQuestion() {
             ${question}
         `;
 
-        // 5. Send the constructed prompt to OpenAI for reasoning
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        // 5. Send the constructed prompt to the backend to get response from OpenAI
+        const openAIResponse = await fetch("http://localhost:3000/get-openai-response", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer `
+                "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                model: "gpt-3.5-turbo",
-                messages: [{ role: "user", content: reasoningPrompt }],
-                max_tokens: 300,
-                temperature: 0.7
-            })
+            body: JSON.stringify({ reasoningPrompt })
         });
 
-        const responseData = await response.json();
+        const openAIData = await openAIResponse.json();
 
         // Check if the request was successful
-        if (!response.ok) {
-            responseDiv.innerHTML = `<strong>Error:</strong> Failed to fetch the response from OpenAI!<br><strong>Full Response:</strong> ${JSON.stringify(responseData, null, 2)}`;
-            console.error("Error details:", responseData);
+        if (!openAIResponse.ok) {
+            responseDiv.innerHTML = `<strong>Error:</strong> Failed to fetch the response from backend!<br><strong>Details:</strong> ${JSON.stringify(openAIData, null, 2)}`;
+            console.error("Error details:", openAIData);
             return;
         }
 
         // Display the final prompt and the OpenAI response
         responseDiv.innerHTML = `
-            <strong style="color:#f873d0;">Final Prompt (user prompt & data from the model embeddings):</strong><br>
+            <strong style="color:#FEB7C7;">Final Prompt (user prompt & data from the model embeddings):</strong><br>
             ${reasoningPrompt}<br><br>
-            <strong style="color:#f873d0;">Model Response:</strong><br> ${responseData.choices[0].message.content}
+            <strong style="color:#FEB7C7;">Model Response:</strong><br> ${openAIData.content}
         `;
 
     } catch (error) {
         responseDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+        console.error("Error in askJPDQuestionWorkflow.js: ", error);
     }
 }
 
-// Function to connect to Jira and create embeddings for each ticket
+
 async function connectToJira() {
-    const jira_url = ''; // Replace with your Jira domain
-    const jira_email = ''; // Your Jira email
-    const jira_api_token = ''; // Your Jira API token
-    const project_key = 'SUN'; // Your project key
+    const projectKey = 'SUN'; // Jira project key
 
     try {
-        console.log("Attempting to connect to Jira...");
+        console.log("Attempting to fetch issues from backend...");
 
-        // Jira API fetch options
-        const authHeader = `Basic ${btoa(`${jira_email}:${jira_api_token}`)}`;
-
-        // Fetch all issues in the project
-        const jqlQuery = `project=${project_key}`;
-        const issuesResponse = await fetch(`${jira_url}/rest/api/2/search?jql=${encodeURIComponent(jqlQuery)}`, {
-            method: 'GET',
+        const response = await fetch("http://localhost:3000/fetch-jira-issues", {
+            method: 'POST',
             headers: {
-                "Authorization": authHeader,
                 "Content-Type": "application/json"
-            }
+            },
+            body: JSON.stringify({ projectKey })
         });
 
-        if (!issuesResponse.ok) {
-            throw new Error(`Failed to fetch issues from Jira. Status: ${issuesResponse.status}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to fetch issues from backend');
         }
 
-        const issuesData = await issuesResponse.json();
-
+        // Process the issues fetched from backend
         const issuesDiv = document.getElementById('jiraIssues');
         issuesDiv.innerHTML = ''; // Clear previous content
 
-        // Extract and store information for each issue
-        for (const issue of issuesData.issues) {
-            const issue_key = issue.key;  // Jira ticket number
+        for (const issue of data.issues) {
+            const issueKey = issue.key;
             const summary = issue.fields.summary;
             const description = issue.fields.description || "No description available";
             const labels = issue.fields.labels.join(", ") || "No labels";
             const impact = issue.fields.customfield_10077 || "No impact";
 
-            // Store detailed information for reasoning later
-            issuesStore[issue_key] = { summary, description, labels, impact };
+            issuesStore[issueKey] = { summary, description, labels, impact };
 
-            // Create an embedding for the summary + description
-            const text_for_embedding = `${summary} ${description}`;
-            const embedding = await createEmbedding(text_for_embedding);
-            embeddingsStore[issue_key] = embedding;
-
-            // Output the information to the web page
-            /*const issueElement = document.createElement('div');
-            issueElement.classList.add('issue');
-            issueElement.innerHTML = `
-                <strong>Issue:</strong> ${issue_key} <br>
-                <strong>Summary:</strong> ${summary} <br>
-                <strong>Description:</strong> ${description} <br>
-                <strong>Labels:</strong> ${labels} <br>
-                <strong>Impact:</strong> ${impact} <br>
-                <hr>
-            `;
-            issuesDiv.appendChild(issueElement);*/
+            // Create embedding and store it
+            const textForEmbedding = `${summary} ${description}`;
+            const embedding = await createEmbedding(textForEmbedding);
+            embeddingsStore[issueKey] = embedding;
         }
+
+        console.log("Issues processed successfully");
 
     } catch (error) {
         console.error("Error:", error.message);
@@ -143,26 +118,30 @@ async function connectToJira() {
     }
 }
 
-// Function to create embeddings for the user's prompt
+
+// Frontend function to send text to the backend
 async function createEmbedding(text) {
     try {
-        const response = await fetch("https://api.openai.com/v1/embeddings", {
+        const response = await fetch("http://localhost:3000/create-embedding", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer OPENAI_API_TOKEN`
+                "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                model: "text-embedding-ada-002",
-                input: text
-            })
+            body: JSON.stringify({ text })
         });
+
         const data = await response.json();
-        return data.data[0].embedding;
+
+        if (response.ok) {
+            return data.embedding;
+        } else {
+            console.error("Error from backend:", data.error);
+        }
     } catch (error) {
-        console.error("Error creating embedding:", error);
+        console.error("Error communicating with backend:", error);
     }
 }
+
 
 // Cosine similarity function to compare embeddings
 function cosineSimilarity(vecA, vecB) {
@@ -186,5 +165,6 @@ function findAllRelevantJiraTickets(queryEmbedding) {
     return similarities.map(result => result.ticketId); // Return all ticket IDs
 }
 
+
 // Call connectToJira to fetch data and generate embeddings on page load
-//connectToJira();
+connectToJira();

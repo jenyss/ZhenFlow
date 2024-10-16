@@ -80,7 +80,7 @@ export async function processConfluencePage(userInput) {
 
     } catch (error) {
         responseDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
-        console.error("Error in processConfluencePage function:", error);
+        console.error("Error in processConfluencePage.js: ", error);
     }
 }
 
@@ -138,7 +138,7 @@ async function getConfluencePageContent(pageUrl) {
 
 
 // break down the content using OpenAI API
-async function breakDownContent(content, descriptionStructure) {
+async function breakDownContent(content) {
     try {
         // Send request to the backend with content and customizable description structure
         const response = await fetch('http://localhost:3000/break-down-content', {
@@ -146,7 +146,7 @@ async function breakDownContent(content, descriptionStructure) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ content, descriptionStructure })  // Send content and structure to the backend
+            body: JSON.stringify({ content })  // Send content and structure to the backend descriptionStructure
         });
 
         const data = await response.json();

@@ -9,17 +9,23 @@
 </head>
 
 <body>
-    <h2 class="blue">JIRA GPT</h2>
-    <div class="row">
-        <textarea id="userInput" placeholder="Ask a question..."></textarea>
-        <button id="sendButton">Send</button>
+    <div class="fixed-top">
+        <div class="centered-content">
+            <img id="headerImage" src="zf.png" alt="Header Image" style="width: 40px; height: auto;">
+            <div class="row">
+                <textarea id="userInput" placeholder="Ask a question..."></textarea>
+                <button id="sendButton">Send</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Add a div element to the HTML body where issues will be displayed -->
-    <div id="jiraIssues" style="margin-top: 20px;"></div>
+    <div class="scrollable-output">
+        <!-- Display Jira issues here -->
+        <div id="jiraIssues" style="margin-top: 20px;"></div>
 
-    <!-- Add a div element to show the response -->
-    <div id="response" style="margin-top: 20px;"></div>
+        <!-- Display response here -->
+        <div id="response" style="margin-top: 20px;"></div>
+    </div>
 
     <script type="module">
         // Import workflows

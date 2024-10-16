@@ -10,10 +10,11 @@ app.use(express.json());
 app.use(express.static('public'));  // Serve static files from public folder
 
 // Get Jira credentials from environment variables
-const jiraEmail = process.env.JIRA_EMAIL;
-const jiraApiToken = process.env.JIRA_API_TOKEN;
-const jiraUrl = process.env.JIRA_URL;
-const openAIToken = process.env.OPENAI_TOKEN;
+export const jiraEmail = process.env.JIRA_EMAIL;
+export const jiraApiToken = process.env.JIRA_API_TOKEN;
+export const jiraUrl = process.env.JIRA_URL;
+export const openAIToken = process.env.OPENAI_TOKEN;
+
 
 // Check if Jira environment variables are set
 if (!jiraEmail || !jiraApiToken || !jiraUrl) {
@@ -121,6 +122,74 @@ async function callOpenAI(content, prompt) {
     }
 }
 
+app.post('/create-embedding', async (req, res) => {
+    const { text } = req.body;  // Receive content from the frontend
+
+    try {
+        const response = await fetch("https://api.openai.com/v1/embeddings", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${openAIToken}`  // Use the token from environment
+            },
+            body: JSON.stringify({
+                model: "text-embedding-ada-002",
+                input: text
+            })
+        });
+
+        const responseData = await response.json();
+
+        // Check if we have a valid response
+        if (responseData.data && responseData.data.length > 0) {
+            const embedding = responseData.data[0].embedding;
+            console.log("Embedding created:", embedding);
+            
+            // Send the embedding back to the frontend
+            res.status(200).json({ embedding });  // Respond with the embedding data
+        } else {
+            throw new Error("Failed to create embedding.");
+        }
+    } catch (error) {
+        console.error("Error creating embedding:", error);
+        res.status(500).json({ error: 'Failed to create embedding' });  // Send an error response
+    }
+});
+
+// Add this function to your existing index.js
+
+// Endpoint to send reasoning prompt to OpenAI
+app.post('/get-openai-response', async (req, res) => {
+    const { reasoningPrompt } = req.body;
+
+    try {
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${openAIToken}`
+            },
+            body: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "user", content: reasoningPrompt }],
+                max_tokens: 300,
+                temperature: 0.7
+            })
+        });
+
+        const responseData = await response.json();
+
+        if (!response.ok) {
+            console.error("Error from OpenAI:", responseData);
+            return res.status(response.status).json({ error: "Failed to get response from OpenAI", details: responseData });
+        }
+
+        res.status(200).json({ content: responseData.choices[0].message.content });
+    } catch (error) {
+        console.error("Error communicating with OpenAI:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 
 // =========================================== JIRA FUNCTIONS =========================================== 
@@ -258,6 +327,34 @@ app.post('/create-ticket', async (req, res) => {
     }
 });
 
+// Add this function to your existing index.js
+
+// Fetch all issues from Jira based on project key
+app.post('/fetch-jira-issues', async (req, res) => {
+    const { projectKey } = req.body;
+    const authHeader = `Basic ${Buffer.from(`${jiraEmail}:${jiraApiToken}`).toString('base64')}`;
+
+    try {
+        const jqlQuery = `project=${projectKey}`;
+        const issuesResponse = await fetch(`${jiraUrl}/rest/api/3/search?jql=${encodeURIComponent(jqlQuery)}`, {
+            method: 'GET',
+            headers: {
+                "Authorization": authHeader,
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (!issuesResponse.ok) {
+            return res.status(issuesResponse.status).json({ error: 'Failed to fetch issues from Jira' });
+        }
+
+        const issuesData = await issuesResponse.json();
+        res.status(200).json({ issues: issuesData.issues });
+    } catch (error) {
+        console.error("Error fetching Jira issues:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 // =========================================== CONFLUENCE FUNCTIONS ===========================================
 
