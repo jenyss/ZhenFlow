@@ -15,8 +15,35 @@ Prompt a model with questions related to the Jira tickets in a JPD project of yo
 
 ## Intallation
 
-You will need:<br>
+### Prerequisites
+Ensure you have the following installed on your system:
 
-Node.js<br>
-OpenAI API tier 1 (at least)<br>
-Atlassian Rest API<br>
+Node.js (v12 or higher)
+npm (Node Package Manager)
+A GitHub account to clone the repository
+
+### Clone the Repository
+To get started, clone the repository from GitHub using the following command:
+
+<code>git clone https://github.com/your-username/your-repository-name.git</code>
+
+Replace your-username and your-repository-name with the actual GitHub username and repository name.
+
+### Navigate to the Project Directory
+
+<code>cd your-repository-name</code>
+
+### Install Dependencies
+
+<code>npm install</code>
+
+### Set Up Environment Variables
+
+<code>
+JIRA_EMAIL=your-jira-email
+JIRA_API_TOKEN=your-jira-api-token
+JIRA_URL=https://your-domain.atlassian.net
+OPENAI_TOKEN=your-openai-api-key
+PORT=3000
+</code>
+
