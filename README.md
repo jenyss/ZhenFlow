@@ -49,7 +49,7 @@ In the root directory of your project, create a new file named <code>.env</code>
 </code>
 
 Make sure your .env file is included in .gitignore to prevent it from being tracked by version control and shared publicly.
-In the root directory of your project, create a new file named <code>.gitignore<code> and list <code>.env</code> in it.
+In the root directory of your project, create a new file named <code>.gitignore</code> and list <code>.env</code> in it.
 
 ### Run the Project
 
