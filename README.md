@@ -18,9 +18,9 @@ Prompt a model with questions related to the Jira tickets in a JPD project of yo
 ### Prerequisites
 Ensure you have the following installed on your system:
 
-Node.js (v12 or higher)
-npm (Node Package Manager)
-A GitHub account to clone the repository
+* Node.js (v12 or higher)
+* npm (Node Package Manager)
+* A GitHub account to clone the repository
 
 ### Clone the Repository
 To get started, clone the repository from GitHub using the following command:
@@ -39,11 +39,24 @@ Replace your-username and your-repository-name with the actual GitHub username a
 
 ### Set Up Environment Variables
 
-<code>
-JIRA_EMAIL=your-jira-email
+<code>JIRA_EMAIL=your-jira-email
 JIRA_API_TOKEN=your-jira-api-token
 JIRA_URL=https://your-domain.atlassian.net
 OPENAI_TOKEN=your-openai-api-key
 PORT=3000
 </code>
+
+Make sure to replace the placeholders with your actual credentials.
+
+### Run the Project
+
+<code>npm start</code>
+
+The application will be available at <code>http://localhost:3000</code>.
+
+### Access the Web Interface
+
+Open your web browser and navigate to: <code>http://localhost:3000</code>
+
+
 
