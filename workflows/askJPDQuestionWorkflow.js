@@ -3,6 +3,95 @@ let embeddingsStore = {};
 let issuesStore = {}; // Store detailed issue information for translation back to natural language
 
 // Main function to handle user input
+// export async function sendQuestion() {
+//     const question = document.getElementById("userInput").value;
+//     const responseDiv = document.getElementById("response");
+
+//     responseDiv.innerHTML = "Processing your request...";
+
+//     try {
+//         // 1. Create embedding for the user's query
+//         const queryEmbedding = await createEmbedding(question);
+
+//         // Call connectToJira to fetch data and generate embeddings on page load
+//         await connectToJira();
+
+//         // 2. Find all relevant Jira tickets based on the query embedding
+//         const relevantTicketIds = findAllRelevantJiraTickets(queryEmbedding);
+
+//         // 3. Retrieve the detailed information of all relevant Jira tickets and combine them
+//         let combinedTicketDetails = '';
+//         let embeddingUsed = false;
+
+//         relevantTicketIds.forEach(ticketId => {
+//             const details = issuesStore[ticketId];
+//             combinedTicketDetails += `
+//                 <strong>Ticket ID:</strong> ${ticketId}<br>
+//                 <strong>Summary:</strong> ${details.summary}<br>
+//                 <strong>Description:</strong> ${details.description}<br>
+//                 <strong>Labels:</strong> ${details.labels}<br>
+//                 <strong>Impact:</strong> ${details.impact}<br>
+//                 <br>---------------------------------------<br>
+//             `;
+
+//             embeddingUsed = true; // Mark that embedding information is available
+
+//         });
+
+//         // 4. Construct the reasoning prompt using information from all tickets
+//         const reasoningPrompt = `
+//             Hi Jeny, I found these tickets relevant to your prompt:<br>
+//             ${combinedTicketDetails}
+
+//             <br>and I used them to answer you question:
+//             ${question}
+//         `;
+
+//         // Adjust reasoningPrompt if no embeddings were actually used
+//         if (!embeddingUsed) {
+//             reasoningPrompt = `
+//                 Hi Jeny, I did not find any relevant ticket information to include. Answering your question based on general knowledge:
+//                 ${question}
+//             `;
+//         }
+
+//         // 5. Send the constructed prompt to the backend to get response from OpenAI
+//         const openAIResponse = await fetch("http://localhost:3000/get-openai-response", {
+//             method: "POST",
+//             headers: {
+//                 "Content-Type": "application/json"
+//             },
+//             body: JSON.stringify({ reasoningPrompt })
+//         });
+
+//         const openAIData = await openAIResponse.json();
+
+//         // Check if the request was successful
+//         if (!openAIResponse.ok) {
+//             responseDiv.innerHTML = `<strong>Error:</strong> Failed to fetch the response from backend!<br><strong>Details:</strong> ${JSON.stringify(openAIData, null, 2)}`;
+//             console.error("Error details:", openAIData);
+//             return;
+//         }
+
+//         // Display the final prompt and the OpenAI response
+//         responseDiv.innerHTML = `
+//             <strong style="color:#FEB7C7;">Final Prompt (user prompt & data from the model embeddings):</strong><br>
+//             ${reasoningPrompt}<br><br>
+//             <strong style="color:#FEB7C7;">Model Response:</strong><br> ${openAIData.content}
+//         `;
+
+//         // If embedding was used, print the combined ticket details
+//         if (embeddingUsed) {
+//             console.log("Embedded Information Used:");
+//             console.log(combinedTicketDetails);
+//         }
+
+//     } catch (error) {
+//         responseDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+//         console.error("Error in askJPDQuestionWorkflow.js: ", error);
+//     }
+// }
+
 export async function sendQuestion() {
     const question = document.getElementById("userInput").value;
     const responseDiv = document.getElementById("response");
@@ -13,11 +102,15 @@ export async function sendQuestion() {
         // 1. Create embedding for the user's query
         const queryEmbedding = await createEmbedding(question);
 
+        // Call connectToJira to fetch data and generate embeddings on page load
+        // await connectToJira();
+
         // 2. Find all relevant Jira tickets based on the query embedding
         const relevantTicketIds = findAllRelevantJiraTickets(queryEmbedding);
 
         // 3. Retrieve the detailed information of all relevant Jira tickets and combine them
         let combinedTicketDetails = '';
+
         relevantTicketIds.forEach(ticketId => {
             const details = issuesStore[ticketId];
             combinedTicketDetails += `
@@ -35,7 +128,7 @@ export async function sendQuestion() {
             Hi Jeny, I found these tickets relevant to your prompt:<br>
             ${combinedTicketDetails}
 
-            <br>and I used them to answer you question:
+            <br>Please answer the following question using the provided information where relevant. If you do not use any of the ticket information, clearly state that it was not relevant:
             ${question}
         `;
 
@@ -57,12 +150,30 @@ export async function sendQuestion() {
             return;
         }
 
-        // Display the final prompt and the OpenAI response
-        responseDiv.innerHTML = `
-            <strong style="color:#FEB7C7;">Final Prompt (user prompt & data from the model embeddings):</strong><br>
-            ${reasoningPrompt}<br><br>
-            <strong style="color:#FEB7C7;">Model Response:</strong><br> ${openAIData.content}
+        const modelResponse = openAIData.content;
+
+        // Update the UI with model response
+        const formattedModelResponse = modelResponse.replace(/\n/g, '<br>');
+        
+
+        // Display the final output conditionally
+        let outputHtml = `
+            <strong style="color:#FEB7C7;">Model Response:</strong><br> ${formattedModelResponse}
         `;
+
+        outputHtml = `
+                <strong style="color:#FEB7C7;">Final Prompt (user prompt & data from the model embeddings):</strong><br>
+                ${reasoningPrompt}<br><br>
+                <strong style="color:#FEB7C7;">Model Response:</strong><br> ${formattedModelResponse}
+            `;
+
+            // Print the embedded information used in the console
+            console.log("Embedded Information Used:");
+            console.log(combinedTicketDetails);
+        
+
+        // Update the UI
+        responseDiv.innerHTML = outputHtml;
 
     } catch (error) {
         responseDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
@@ -96,6 +207,9 @@ async function connectToJira() {
         issuesDiv.innerHTML = ''; // Clear previous content
 
         for (const issue of data.issues) {
+            // Log all fields of the issue to the console
+            console.log("Full issue fields:", issue.fields);
+
             const issueKey = issue.key;
             const summary = issue.fields.summary;
             const description = issue.fields.description || "No description available";
@@ -166,5 +280,5 @@ function findAllRelevantJiraTickets(queryEmbedding) {
 }
 
 
-// Call connectToJira to fetch data and generate embeddings on page load
+// // Call connectToJira to fetch data and generate embeddings on page load
 connectToJira();

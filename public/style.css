@@ -19,9 +19,9 @@ body {
 }
 
 #userInput {
-    width: 500px;
+    width: 650px;
     padding: 15px;
-    border-radius: 5px;
+    border-radius: 15px;
     border: none;
     background-color: #555454;
     color: #f0f0f0;
@@ -33,7 +33,7 @@ button {
     background-color: #FEB7C7;
     border: none;
     padding: 10px 20px;
-    border-radius: 5px;
+    border-radius: 15px;
     font-size: 16px;
     cursor: pointer;
     color: #302f2f;
@@ -41,7 +41,7 @@ button {
 }
 
 button:hover {
-    background-color: #dc98a8;
+    background-color: #EF1548;
 }
 
 #response {

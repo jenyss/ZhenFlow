@@ -55,7 +55,7 @@ In the root directory of your project, create a new file named <code>.gitignore<
 
 <code>npm start</code>
 
-The application will be available at <code>http://localhost:3000</code>.
+The application will be available at <code>http://localhost:3000</code>
 
 ### Access the Web Interface
 

@@ -336,7 +336,7 @@ app.post('/fetch-jira-issues', async (req, res) => {
 
     try {
         const jqlQuery = `project=${projectKey}`;
-        const issuesResponse = await fetch(`${jiraUrl}/rest/api/3/search?jql=${encodeURIComponent(jqlQuery)}`, {
+        const issuesResponse = await fetch(`${jiraUrl}/rest/api/3/search?jql=${encodeURIComponent(jqlQuery)}&expand=renderedFields,names,properties,editmeta`, {
             method: 'GET',
             headers: {
                 "Authorization": authHeader,
