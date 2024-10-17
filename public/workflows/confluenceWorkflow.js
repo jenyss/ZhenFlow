@@ -31,7 +31,7 @@ export async function processConfluencePage(userInput) {
 
         // Check if the epic already exists and stop the flow
         if (epicResult.message.includes("already exists")) {
-            responseDiv.innerHTML = `Epic already exists: ${epicResult.key}`;
+            responseDiv.innerHTML = `Epic with the same name already exists: ${epicResult.key}`; //key 
             return;  // Stop further processing
         }
         
@@ -76,7 +76,7 @@ export async function processConfluencePage(userInput) {
         // await getConfluencePage(userInput);
 
 
-        responseDiv.innerHTML = `Jira tickets created and Confluence page updated. <br> <a style="color:#ff7352;" href="${userInput}">View updated Confluence page</a>`;
+        responseDiv.innerHTML = `Jira tickets created and Confluence page updated. <br> <a style="color:#FEB7C7;" href="${userInput}">View updated Confluence page</a>`;
 
     } catch (error) {
         responseDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;

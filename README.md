@@ -16,6 +16,10 @@ Prompt a model with questions related to the Jira tickets in a JPD project of yo
 ## Intallation
 
 ### Prerequisites
+
+* OpenAI API Token
+* Atlasian API Token
+
 Ensure you have the following installed on your system:
 
 * Node.js (v12 or higher)
