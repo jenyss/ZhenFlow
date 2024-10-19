@@ -32,7 +32,7 @@ app.post('/break-down-content', async (req, res) => {
     // Define a base prompt where you can pass different description structures
     const prompt = `
     Find the "Requirements" section and break down only the content from under this section into separate Jira tickets. 
-    For each ticket, match the output to follow exactly the format provided below.
+    For each ticket, match the output to follow exactly the format provided below. Pay attention - requirements list may contain 0 to N requirements listed!
 
     Summary: <This is a high-level description of the task (used as the summary of the Jira ticket)>
     Description: <This should contain>
@@ -50,6 +50,8 @@ app.post('/break-down-content', async (req, res) => {
                 1. Take a course on LLMs
                 2. Train LLMs
                 3. White a chatbot
+                4. White a chatbot
+                5. White a chatbot
 
     Example 2:
         Summary: My next taks is to learn how to code
@@ -59,6 +61,7 @@ app.post('/break-down-content', async (req, res) => {
             Requirements:
                 1. Task1
                 2. Task2
+                3. White a chatbot
 
     Example 3:
         Summary: Working with promopts
@@ -68,6 +71,21 @@ app.post('/break-down-content', async (req, res) => {
             Requirements:
                 1. Learn what is a prompt
                 2. Create some prompts
+
+    Example 4:
+        Summary: Working with promopts
+        Description:
+            Goal:
+                Learn how to use prompts
+            Requirements:
+
+    Example 5:
+        Summary: Working with promopts
+        Description:
+            Goal:
+                Learn how to use prompts
+            Requirements:
+                1. Learn what is a prompt
 
     Content to be broken down:
     ${content}
