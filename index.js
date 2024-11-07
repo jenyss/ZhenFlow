@@ -120,7 +120,7 @@ async function callOpenAI(content, prompt) {
                         content: prompt
                     }
                 ],
-                max_tokens: 2048,  // Adjust token limit based on content size and response length
+                max_tokens: 4095,  // Adjust token limit based on content size and response length
                 temperature: 0.2
             })
         });
@@ -191,7 +191,7 @@ app.post('/get-openai-response', async (req, res) => {
             body: JSON.stringify({
                 model: "gpt-3.5-turbo",
                 messages: [{ role: "user", content: reasoningPrompt }],
-                max_tokens: 300,
+                max_tokens: 4095,
                 temperature: 0.7
             })
         });
